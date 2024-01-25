@@ -1,0 +1,104 @@
+1. Who is the senior most employee based on job title?
+Madam Mohan
+Query: 
+select employee_id, first_name, last_name
+from employee
+where title = 'Senior General Manager'
+
+2. Which countries have the most invoices?
+USA
+Query: 
+select count(invoice_id) as invoices_count, billing_country
+from invoice
+group by billing_country
+order by count(invoice_id) DESC
+
+3.What are top 3 values of total invoice?
+23.75, 19.8,19.8
+Query:
+select invoice_id, customer_id, billing_country, billing_state, billing_city, total as total_invoice
+from invoice
+order by total DESC
+limit 3
+
+4. Which city has the best customers? We would like to throw a promotional Music
+Festival in the city we made the most money. 
+Prague - 273.24
+Query:
+select sum(total) as total_invoice, billing_city
+from invoice
+group by billing_city
+order by sum(total) DESC
+
+5. Who is the best customer? The customer who has spent the most money will be
+declared the best customer. Write a query that returns the person who has spent the
+most money
+R Madhav 144.45
+
+Query:
+select invoice.customer_id, customer.first_name, customer.last_name, sum(total) as total_bill_amount
+from invoice left join  customer on invoice.customer_id = customer.customer_id
+group by invoice.customer_id, customer.first_name, customer.last_name
+order by sum(total) DESC
+
+6.Write query to return the email, first name, last name, & Genre of all Rock Music
+listeners.
+
+Query:
+select distinct(customer.customer_id), customer.first_name, customer.last_name, customer.email
+from invoice_line
+left join track on invoice_line.track_id = track.track_id
+left join genre on track.genre_id = genre.genre_id
+left join invoice on invoice.invoice_id = invoice_line.invoice_id
+left join customer on invoice.customer_id = customer.customer_id
+where genre.name = 'Rock'
+order by customer.email ASC
+
+7. What are the names of the top 10 Rock Music bands.
+Query: 
+select artist.artist_id, artist.name, count(track_id)
+from track
+left join album on track.album_id = album.album_id
+left join artist on album.artist_id = artist.artist_id
+where genre_id = (select genre_id from genre where name = 'Rock')
+group by artist.artist_id, artist.name
+order by count(track_id) DESC
+limit 10
+
+8. Return all songs whose duration > average duration
+Query:
+select track_id, name, milliseconds
+from track
+where milliseconds > (select avg(milliseconds) from track)
+order by milliseconds DESC
+
+9. Find how much amount spent by each customer on artists? 
+
+Query: select invoice.customer_id,customer.first_name, customer.last_name, artist.name as artistName, sum(total)
+from invoice
+left join customer on invoice.customer_id = customer.customer_id
+left join invoice_line on invoice.invoice_id = invoice_line.invoice_id
+left join track on invoice_line.track_id = track.track_id
+left join album on track.album_id = album.album_id
+left join artist on album.artist_id = artist.artist_id
+group by invoice.customer_id, customer.first_name, customer.last_name, artist.name
+order by sum(total) DESC
+
+10. Find out the most popular genre with respect to each country
+
+Query: with cte as (select billing_country, genre.name as genre_name, count(*) as popularity
+from invoice
+left join invoice_line on invoice.invoice_id = invoice_line.invoice_id
+left join track on invoice_line.track_id = track.track_id
+left join genre on track.genre_id = genre.genre_id
+group by genre.name, billing_country), 
+
+
+rank_table as (select billing_country, genre_name, popularity, rank() over(partition by billing_country order by popularity DESC) as ranking
+from cte)
+
+select billing_country as country, genre_name as genre, ranking
+from rank_table
+where ranking <= 1
+
+
